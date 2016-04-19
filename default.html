@@ -1,0 +1,55 @@
+﻿<!DOCTYPE html>
+<html xmlns:mso="urn:schemas-microsoft-com:office:office" xmlns:msdt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882">
+<head>
+  <title></title>
+  <link rel="StyleSheet" href="css/default.css" type="text/css"
+ media="screen">
+
+<!--[if gte mso 9]><xml>
+<mso:CustomDocumentProperties>
+<mso:Categoría msdt:dt="string"></mso:Categoría>
+</mso:CustomDocumentProperties>
+</xml><![endif]-->
+</head>
+<body>
+<big><big><big><big>Semantics</big></big></big></big><br>
+<br>
+<br>
+<script src="./Assignment2.js"></script>
+<table style="width: 1013px;">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;"><textarea class="console"
+ style="height: 700px; width: 788px;" id="console"></textarea>
+      </td>
+      <td> Program to interpret/verify<br>
+      <textarea id="p2input" style="width: 400px; height: 350px;">
+block([
+assume(tru()), 
+assgn('x', num(0)), 
+assgn('y', num(0)), 
+assgn('t',num(0)), 
+whle(lt(vr('x'), num(10)), 
+   block([ ifte(lt(num(5), vr('t')),
+           block([ 
+            assgn('x', plus(vr('x'),num(1))), 
+            assgn('y', plus(vr('y'),num(1))), 
+           ]), 
+           skip()), 
+           assgn('t', plus(vr('t'), num(1))),
+   ]) 
+), 
+assert(eq(vr('x'), vr('y')))
+]);            
+      </textarea>
+      <div class="fakebutton" onclick="interp()">Run Interpreter<code></code></div>
+ <textarea id="State" style="width: 400px; height: 30px;">
+     {"x":10, "y":25}
+      </textarea>
+      <div class="fakebutton" onclick="genVC()">Run VC Generation <code></code></div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</body>
+</html>
