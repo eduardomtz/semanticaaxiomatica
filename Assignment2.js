@@ -46,9 +46,19 @@ function interpretStmt(c, state) {
         return sigmaP;
     }
     if(c.type == IFTE){
-    	if(interpretExpr(c, state) == false){
-    		interpretStmt(fcase);
-    	}
+    	if(interpretExpr(c.cond, state) == false){
+            var sigmaP = interpretStmt(c.fcase, state); 
+    		return sigmaP;
+    	} else {
+            var sigmaP = interpretStmt(c.tcase, state); 
+    		return sigmaP;
+        }
+    }
+    
+    if (c.type == ASSGN ){
+        state["'" + c.vr + "'"] = interpretExpr(c.val, state);
+        var ExprP = interpretExpr(c.vr, state);
+        return ExprP;
     }
 }
 
