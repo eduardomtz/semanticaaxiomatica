@@ -28,7 +28,7 @@ var ASSERT = "ASSERT";//NO, sólo skip
 function interpretExpr(e, state) {
     if (e.type == NUM) { return e.val; }
     if (e.type == FALSE) { return false; }
-    if (e.type == VAR) { return interpretExpr(e.name, state);}
+    if (e.type == VR) { return state[e.name];}
     if (e.type == TIMES) { return interpretExpr(e.left, state) * interpretExpr(e.right, state) }
     if (e.type == LT) { return interpretExpr(e.left, state) < interpretExpr(e.right, state) }
     if (e.type == AND) { return interpretExpr(e.left, state) && interpretExpr(e.right, state) }
@@ -54,11 +54,28 @@ function interpretStmt(c, state) {
     		return sigmaP;
         }
     }
-    
     if (c.type == ASSGN ){
-        state["'" + c.vr + "'"] = interpretExpr(c.val, state);
-        var ExprP = interpretExpr(c.vr, state);
-        return ExprP;
+        state[c.vr] = interpretExpr(c.val, state);
+        return state;
+    }
+    if(c.type == SKIP){
+    	return state;
+    }
+    if(c.type == ASSUME){
+    	return state;
+    }
+    if(c.type == ASSERT){
+    	return state;
+    }
+    if(c.type == WHLE) {
+    	if(interpretExpr(c.cond, state) == false){
+    		return state;
+    	}
+    	else { 
+    		var sigmaPP = interpretStmt(c.body, state);
+    		var sigmaP = interpretStmt(c,sigmaPP);
+    		return sigmaP;
+    	}
     }
 }
 
