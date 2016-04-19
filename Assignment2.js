@@ -29,10 +29,10 @@ function interpretExpr(e, state) {
     if (e.type == NUM) { return e.val; }
     if (e.type == FALSE) { return false; }
     if (e.type == VAR) { return interpretExpr(e.name, state);}
-    if (e.type == TIMES) { return interpretExpr(e.left, state) + interpretExpr(e.right, state) }
-    if (e.type == LT) { return interpretExpr(e.left, state) + interpretExpr(e.right, state) }
-    if (e.type == AND) { return interpretExpr(e.left, state) + interpretExpr(e.right, state) }
-    if (e.type == NOT) { return interpretExpr(e.left, state)}
+    if (e.type == TIMES) { return interpretExpr(e.left, state) * interpretExpr(e.right, state) }
+    if (e.type == LT) { return interpretExpr(e.left, state) < interpretExpr(e.right, state) }
+    if (e.type == AND) { return interpretExpr(e.left, state) && interpretExpr(e.right, state) }
+    if (e.type == NOT) { return !interpretExpr(e.left, state)}
     if (e.type == PLUS) {  return interpretExpr(e.left, state) + interpretExpr(e.right, state) }
 
 }
