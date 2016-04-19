@@ -11,26 +11,30 @@
 var NUM = "NUM";
 var FALSE = "FALSE";
 var VR = "VAR";
-var PLUS = "PLUS";
+var PLUS = "PLUS"; 
 var TIMES = "TIMES";
 var LT = "LT";
-var AND = "AND";
-var NOT = "NOT";
+var AND = "AND"; 
+var NOT = "NOT"; 
 //stmnt c or command
 var SEQ = "SEQ";
 var IFTE = "IFSTMT";
 var WHLE = "WHILESTMT";
 var ASSGN = "ASSGN";
 var SKIP = "SKIP";
-var ASSUME = "ASSUME";//NO como skip
-var ASSERT = "ASSERT";//NO como skip
+var ASSUME = "ASSUME";//NO, sólo skip
+var ASSERT = "ASSERT";//NO, sólo skip
 
 function interpretExpr(e, state) {
     if (e.type == NUM) { return e.val; }
     if (e.type == FALSE) { return false; }
     if (e.type == VAR) { return interpretExpr(e.name, state);}
-    if (e.type == PLUS) { return interpretExpr(e.left, state) + interpretExpr(e.right, state) }
-	
+    if (e.type == TIMES) { return interpretExpr(e.left, state) + interpretExpr(e.right, state) }
+    if (e.type == LT) { return interpretExpr(e.left, state) + interpretExpr(e.right, state) }
+    if (e.type == AND) { return interpretExpr(e.left, state) + interpretExpr(e.right, state) }
+    if (e.type == NOT) { return interpretExpr(e.left, state)}
+    if (e.type == PLUS) {  return interpretExpr(e.left, state) + interpretExpr(e.right, state) }
+
 }
 
 
