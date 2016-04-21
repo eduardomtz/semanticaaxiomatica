@@ -7,25 +7,28 @@
 ////////////////
 // Problem 2
 ///////////////
-//expression
+
 var NUM = "NUM";
 var FALSE = "FALSE";
 var VR = "VAR";
-var PLUS = "PLUS"; 
+var PLUS = "PLUS";
 var TIMES = "TIMES";
 var LT = "LT";
-var AND = "AND"; 
-var NOT = "NOT"; 
-//stmnt c or command
+var AND = "AND";
+var NOT = "NOT";
+
 var SEQ = "SEQ";
 var IFTE = "IFSTMT";
 var WHLE = "WHILESTMT";
 var ASSGN = "ASSGN";
 var SKIP = "SKIP";
-var ASSUME = "ASSUME";//NO, sólo skip
-var ASSERT = "ASSERT";//NO, sólo skip
+var ASSUME = "ASSUME";
+var ASSERT = "ASSERT";
 
-//Assigment 2.1
+
+
+
+
 function substitute(e, varName, newExp) {
 
     if (e.type == VR) {
@@ -35,7 +38,42 @@ function substitute(e, varName, newExp) {
             return e;
         }
     }
+
+    if(cmd.type == NUM) {
+        return e.val;
+        }
+    if(cmd.type == FALSE){
+        return false;
+    }
+    if(cmd.type == PLUS){
+        var reP = substitute(e.left, varName, newExp);
+        var leP = substitute(e.right, varName, newExp);
+        return plus(reP, leP);
+    }
+        if(cmd.type == TIMES){
+        var reP = substitute(e.left, varName, newExp);
+        var leP = substitute(e.right, varName, newExp);
+        return times(reP, leP);
+    }
+    if(cmd.type == LT){
+        var reP = substitute(e.left, varName, newExp);
+        var leP = substitute(e.right, varName, newExp);
+        return lt(reP, leP);
+    }   
+       if(cmd.type == AND){
+        var reP = substitute(e.left, varName, newExp);
+        var leP = substitute(e.right, varName, newExp);
+        return and(reP, leP);
+    }
+    if(cmd.type == NOT){
+        var eP = substitute(e.left, varName, newExp);
+        return not(eP);
+    }
+
+
 }
+
+
 
 function wpc(cmd, predQ) {
     //predQ is an expression.
@@ -46,21 +84,37 @@ function wpc(cmd, predQ) {
     if (cmd.type == ASSERT) {
         return and(cmd.exp, predQ);
     }
+    if(cmd.type == ASSGN) {
+        return substitute(predQ, cmd.vr, cmd.val);
+    }
+    
+    if(cmd.type == SEQ){
+        return wpc(cmd.fst, wpc(cmd.snd, predQ));
+    }
+    if(cmd.type == IFTE){
+        var if1 =  and(cmd.cond, wpc(cmd.tcase, predQ));
+        var if2 = and(not(cmd.cond), wpc(cmd.fcase, predQ));
+        return or(if1, if2);
+        }
+    }
+
 }
 
 
-//Assigment 2.0
+
+
+
 function interpretExpr(e, state) {
     if (e.type == NUM) { return e.val; }
     if (e.type == FALSE) { return false; }
-    if (e.type == VR) { return state[e.name];}
+//####################################
+    if (e.type == VR) { return state[e.name]; }
+    
+    if (e.type == PLUS) { return interpretExpr(e.left, state) + interpretExpr(e.right, state) }
     if (e.type == TIMES) { return interpretExpr(e.left, state) * interpretExpr(e.right, state) }
     if (e.type == LT) { return interpretExpr(e.left, state) < interpretExpr(e.right, state) }
     if (e.type == AND) { return interpretExpr(e.left, state) && interpretExpr(e.right, state) }
-    if (e.type == NOT) { return !interpretExpr(e.left, state)}
-    if (e.type == PLUS) {  return interpretExpr(e.left, state) + interpretExpr(e.right, state) } 
-    //algo
-
+    if (e.type == NOT) { return ! interpretExpr(e.left, state) }
 }
 
 
@@ -70,37 +124,42 @@ function interpretStmt(c, state) {
         var sigmaP = interpretStmt(c.snd, sigmaPP);
         return sigmaP;
     }
-    if(c.type == IFTE){
-    	if(interpretExpr(c.cond, state) == false){
-            var sigmaP = interpretStmt(c.fcase, state); 
-    		return sigmaP;
-    	} else {
-            var sigmaP = interpretStmt(c.tcase, state); 
-    		return sigmaP;
+    
+    if (c.type == IFTE){
+        if(interpretExpr(c.cond, state) == false){
+            var simgaP = interpretStmt(c.fcase, state);
+            return sigmaP;
+        } else {
+            var sigmaP = interpretStmt(c.tcase, state);
+            return sigmaP;
         }
     }
-    if (c.type == ASSGN ){
+    
+    if (c.type == WHLE){
+        if(interpretExpr(c.cond, state) == false){
+            return state;
+        } else {
+            var sigmaPP = interpretStmt(c.body, state);
+            var sigmaP = interpretStmt(c, sigmaPP);
+            return sigmaP;
+        }
+    }
+    
+    if(c.type == ASSGN) {
         state[c.vr] = interpretExpr(c.val, state);
         return state;
     }
-    if(c.type == SKIP){
-    	return state;
+    
+    if(c.type == ASSUME) {
+        return state;
     }
-    if(c.type == ASSUME){
-    	return state;
+    
+    if(c.type == SKIP) {
+        return state;
     }
-    if(c.type == ASSERT){
-    	return state;
-    }
-    if(c.type == WHLE) {
-    	if(interpretExpr(c.cond, state) == false){
-    		return state;
-    	}
-    	else { 
-    		var sigmaPP = interpretStmt(c.body, state);
-    		var sigmaP = interpretStmt(c,sigmaPP);
-    		return sigmaP;
-    	}
+    
+    if(c.type == ASSERT) {
+        return state;
     }
 }
 
@@ -130,6 +189,10 @@ function lt(x, y) {
 }
 function and(x, y) {
     return { type: AND, left: x, right: y, toString: function () { return "(" + this.left.toString() + "&&" + this.right.toString() + ")"; } };
+}
+
+function or(x,y){
+    return not(and(not(x),not(y)));
 }
 
 function not(x) {
@@ -204,12 +267,16 @@ function interp() {
     writeToConsole(prog.toString());
 }
 
+
 function genVC() {
     var prog = eval(document.getElementById("p2input").value);
     clearConsole();
     writeToConsole("Just pretty printing for now");
     writeToConsole(prog.toString());
+    var mywpc = wpc(prog, tru);
+    writeToConsole(mywpc.toString());
 }
+
 
 
 
