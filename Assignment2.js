@@ -25,6 +25,31 @@ var SKIP = "SKIP";
 var ASSUME = "ASSUME";//NO, sólo skip
 var ASSERT = "ASSERT";//NO, sólo skip
 
+//Assigment 2.1
+function substitute(e, varName, newExp) {
+
+    if (e.type == VR) {
+        if (e.name === varName) {
+            return newExp;
+        } else {
+            return e;
+        }
+    }
+}
+
+function wpc(cmd, predQ) {
+    //predQ is an expression.
+    //cmd is a statement.
+    if (cmd.type == SKIP) {
+        return predQ;
+    }
+    if (cmd.type == ASSERT) {
+        return and(cmd.exp, predQ);
+    }
+}
+
+
+//Assigment 2.0
 function interpretExpr(e, state) {
     if (e.type == NUM) { return e.val; }
     if (e.type == FALSE) { return false; }
