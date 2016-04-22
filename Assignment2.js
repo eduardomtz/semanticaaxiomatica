@@ -30,7 +30,8 @@ var ASSERT = "ASSERT";
 
 
 function substitute(e, varName, newExp) {
-
+    var t =e;
+    console.log("no se");
     if (e.type == VR) {
         if (e.name === varName) {
             return newExp;
@@ -39,10 +40,10 @@ function substitute(e, varName, newExp) {
         }
     }
 
-    if(cmd.type == NUM) {
+    if(cmd.type === NUM) {
         return e.val;
         }
-    if(cmd.type == FALSE){
+    if(cmd.type === FALSE){
         return false;
     }
     if(cmd.type == PLUS){
@@ -96,13 +97,7 @@ function wpc(cmd, predQ) {
         var if2 = and(not(cmd.cond), wpc(cmd.fcase, predQ));
         return or(if1, if2);
         }
-    }
-
 }
-
-
-
-
 
 function interpretExpr(e, state) {
     if (e.type == NUM) { return e.val; }
@@ -273,7 +268,7 @@ function genVC() {
     clearConsole();
     writeToConsole("Just pretty printing for now");
     writeToConsole(prog.toString());
-    var mywpc = wpc(prog, tru);
+    var mywpc = wpc(prog, tru());
     writeToConsole(mywpc.toString());
 }
 
