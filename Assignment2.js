@@ -90,7 +90,8 @@ function wpc(cmd, predQ) {
     }
     
     if(cmd.type == SEQ){
-        return wpc(cmd.fst, wpc(cmd.snd, predQ));
+        var tst =  wpc(cmd.snd, predQ);
+        return wpc(cmd.fst,tst);
     }
     if(cmd.type == IFTE){
         var if1 =  and(cmd.cond, wpc(cmd.tcase, predQ));
