@@ -39,34 +39,33 @@ function substitute(e, varName, newExp) {
             return e;
         }
     }
-
-    if(cmd.type === NUM) {
-        return e.val;
-        }
-    if(cmd.type === FALSE){
-        return false;
+    if(e.type === NUM) {
+        return e;
     }
-    if(cmd.type == PLUS){
+    if(e.type === FALSE){
+        return flse();
+    }
+    if(e.type == PLUS){
         var reP = substitute(e.left, varName, newExp);
         var leP = substitute(e.right, varName, newExp);
         return plus(reP, leP);
     }
-        if(cmd.type == TIMES){
+        if(e.type == TIMES){
         var reP = substitute(e.left, varName, newExp);
         var leP = substitute(e.right, varName, newExp);
         return times(reP, leP);
     }
-    if(cmd.type == LT){
+    if(e.type == LT){
         var reP = substitute(e.left, varName, newExp);
         var leP = substitute(e.right, varName, newExp);
         return lt(reP, leP);
     }   
-       if(cmd.type == AND){
+       if(e.type == AND){
         var reP = substitute(e.left, varName, newExp);
         var leP = substitute(e.right, varName, newExp);
         return and(reP, leP);
     }
-    if(cmd.type == NOT){
+    if(e.type == NOT){
         var eP = substitute(e.left, varName, newExp);
         return not(eP);
     }
@@ -79,6 +78,7 @@ function substitute(e, varName, newExp) {
 function wpc(cmd, predQ) {
     //predQ is an expression.
     //cmd is a statement.
+    
     if (cmd.type == SKIP) {
         return predQ;
     }
@@ -86,23 +86,30 @@ function wpc(cmd, predQ) {
         return and(cmd.exp, predQ);
     }
     if(cmd.type == ASSGN) {
+        // return substitute(cmd.val, cmd.vr, predQ);
         return substitute(predQ, cmd.vr, cmd.val);
     }
     
     if(cmd.type == SEQ){
-        return wpc(cmd.fst, wpc(cmd.snd, predQ));
+    	var Q = wpc(cmd.snd, predQ);
+        return wpc(cmd.fst, Q);
     }
     if(cmd.type == IFTE){
         var if1 =  and(cmd.cond, wpc(cmd.tcase, predQ));
         var if2 = and(not(cmd.cond), wpc(cmd.fcase, predQ));
         return or(if1, if2);
         }
+    if(cmd.type == ASSUME)
+    {
+    	return or(not(cmd.exp), predQ);
+    	//not( expr ) or predQ
+    }
 }
 
 function interpretExpr(e, state) {
     if (e.type == NUM) { return e.val; }
     if (e.type == FALSE) { return false; }
-//####################################
+	//####################################
     if (e.type == VR) { return state[e.name]; }
     
     if (e.type == PLUS) { return interpretExpr(e.left, state) + interpretExpr(e.right, state) }
