@@ -30,8 +30,6 @@ var ASSERT = "ASSERT";
 
 
 function substitute(e, varName, newExp) {
-    var t =e;
-    console.log("no se");
     if (e.type == VR) {
         if (e.name === varName) {
             return newExp;
@@ -50,7 +48,7 @@ function substitute(e, varName, newExp) {
         var leP = substitute(e.right, varName, newExp);
         return plus(reP, leP);
     }
-        if(e.type == TIMES){
+    if(e.type == TIMES){
         var reP = substitute(e.left, varName, newExp);
         var leP = substitute(e.right, varName, newExp);
         return times(reP, leP);
@@ -59,8 +57,8 @@ function substitute(e, varName, newExp) {
         var reP = substitute(e.left, varName, newExp);
         var leP = substitute(e.right, varName, newExp);
         return lt(reP, leP);
-    }   
-       if(e.type == AND){
+    }
+    if(e.type == AND){
         var reP = substitute(e.left, varName, newExp);
         var leP = substitute(e.right, varName, newExp);
         return and(reP, leP);
@@ -69,54 +67,105 @@ function substitute(e, varName, newExp) {
         var eP = substitute(e.left, varName, newExp);
         return not(eP);
     }
-
-
+	
+	//nuevas 
+	if(e.type == SEQ){
+    	var S = substitute(e.snd, varName, newExp);
+        var F = substitute(e.fst, varName, newExp);
+		return seq(F,S);
+    }
 }
 
-
-
-function wpc(cmd, predQ) {
+function vc(cmd, predQ) {
     //predQ is an expression.
     //cmd is a statement.
-    
+	
     if (cmd.type == SKIP) {
         return predQ;
     }
-    if (cmd.type == ASSERT) {
+    
+	if (cmd.type == ASSERT) {
         return and(cmd.exp, predQ);
     }
+	
     if(cmd.type == ASSGN) {
-        // return substitute(cmd.val, cmd.vr, predQ);
-        return substitute(predQ, cmd.vr, cmd.val);
+		return substitute(predQ, cmd.vr, cmd.val);
     }
     
     if(cmd.type == SEQ){
-    	var Q = wpc(cmd.snd, predQ);
-        return wpc(cmd.fst, Q);
+
+    	var Q = vc(cmd.snd, predQ);
+        var S = vc(cmd.fst, Q);
+        return S;
     }
+	
     if(cmd.type == IFTE){
-        var if1 =  and(cmd.cond, wpc(cmd.tcase, predQ));
-        var if2 = and(not(cmd.cond), wpc(cmd.fcase, predQ));
+        var req1 = vc(cmd.tcase, predQ);
+        var if1 =  and(cmd.cond, req1);
+        var req2 = vc(cmd.fcase, predQ);
+        var if2 = and(not(cmd.cond), req2);
         return or(if1, if2);
-        }
-    if(cmd.type == ASSUME)
+    }
+    
+	if(cmd.type == ASSUME)
     {
     	return or(not(cmd.exp), predQ);
     	//not( expr ) or predQ
+		
     }
+	
+	if(cmd.type == WHLE) {
+		
+		var Prima = vc(cmd.body, cmd.inv);
+		
+		var parte1 = or(not(cmd.cond), Prima);
+
+		var parte2 = or(cmd.cond, predQ);
+		
+		var gen = and(parte1, parte2);
+		
+		var forall = or(not(cmd.inv), gen);
+		
+		// substitute Vx,t
+		// iterar state
+		var prog = eval(document.getElementById("p2input").value);
+		var state = JSON.parse(document.getElementById("State").value);   
+		state = interpretStmt(prog, state);
+		
+		for (var property in state) {
+			forall = substitute(forall, property, vr('_' + property));
+		}
+		
+		return and(cmd.inv, forall);
+	}
 }
 
 function interpretExpr(e, state) {
-    if (e.type == NUM) { return e.val; }
-    if (e.type == FALSE) { return false; }
+    if (e.type == NUM) { 
+	return e.val; 
+	}
+    if (e.type == FALSE) { 
+	return false; 
+	}
 	//####################################
-    if (e.type == VR) { return state[e.name]; }
-    
-    if (e.type == PLUS) { return interpretExpr(e.left, state) + interpretExpr(e.right, state) }
-    if (e.type == TIMES) { return interpretExpr(e.left, state) * interpretExpr(e.right, state) }
-    if (e.type == LT) { return interpretExpr(e.left, state) < interpretExpr(e.right, state) }
-    if (e.type == AND) { return interpretExpr(e.left, state) && interpretExpr(e.right, state) }
-    if (e.type == NOT) { return ! interpretExpr(e.left, state) }
+    if (e.type == VR) { 
+	return state[e.name]; 
+	}
+    if (e.type == PLUS) { 
+	return interpretExpr(e.left, state) + interpretExpr(e.right, state);
+	}
+    if (e.type == TIMES) { 
+	return interpretExpr(e.left, state) * interpretExpr(e.right, state);
+	}
+    if (e.type == LT) { 
+	return interpretExpr(e.left, state) < interpretExpr(e.right, state);
+	}
+    if (e.type == AND) { 
+	return interpretExpr(e.left, state) && interpretExpr(e.right, state);
+	}
+    if (e.type == NOT) { 
+	return !interpretExpr(e.left, state);
+	}
 }
 
 
@@ -129,11 +178,11 @@ function interpretStmt(c, state) {
     
     if (c.type == IFTE){
         if(interpretExpr(c.cond, state) == false){
-            var simgaP = interpretStmt(c.fcase, state);
+            var sigmaP = interpretStmt(c.fcase, state);
             return sigmaP;
         } else {
-            var sigmaP = interpretStmt(c.tcase, state);
-            return sigmaP;
+            var sigmaPP = interpretStmt(c.tcase, state);
+            return sigmaPP;
         }
     }
     
@@ -171,76 +220,95 @@ function str(obj) { return JSON.stringify(obj); }
 //Constructor definitions for the different AST nodes.
 
 function flse() {
-    return { type: FALSE, toString: function () { return "false"; } };
+    return { type: FALSE, 
+	toString: function () { return "false"; }, 
+	toStringZ3: function() { return "false"; } };
 }
 
 function vr(name) {
-    return { type: VR, name: name, toString: function () { return this.name; } };
+    return { type: VR, name: name, 
+	toString: function () { return this.name; }, 
+	toStringZ3: function () { return this.name; }};
 }
 function num(n) {
-    return { type: NUM, val: n, toString: function () { return this.val; } };
+    return { type: NUM, val: n, 
+	toString: function () { return this.val; }, 
+	toStringZ3: function () { return this.val; } };
 }
 function plus(x, y) {
-    return { type: PLUS, left: x, right: y, toString: function () { return "(" + this.left.toString() + "+" + this.right.toString() + ")"; } };
+    return { type: PLUS, left: x, right: y, 
+	toString: function () { return "(" + this.left.toString() + "+" + this.right.toString() + ")"; }, 
+	toStringZ3: function () { return "(+ " + this.left.toStringZ3() + " " + this.right.toStringZ3() + ")"; } };
 }
 function times(x, y) {
-    return { type: TIMES, left: x, right: y, toString: function () { return "(" + this.left.toString() + "*" + this.right.toString() + ")"; } };
+    return { type: TIMES, left: x, right: y, 
+	toString: function () { return "(" + this.left.toString() + "*" + this.right.toString() + ")"; }, 
+	toStringZ3: function () { return "(* " + this.left.toStringZ3() + " " + this.right.toStringZ3() + ")"; } };
 }
 function lt(x, y) {
-    return { type: LT, left: x, right: y, toString: function () { return "(" + this.left.toString() + "<" + this.right.toString() + ")"; } };
+    return { type: LT, left: x, right: y, 
+	toString: function () { return "(" + this.left.toString() + "<" + this.right.toString() + ")"; }, 
+	toStringZ3: function () { return "(< " + this.left.toStringZ3() + " " + this.right.toStringZ3() + ")"; } };
 }
 function and(x, y) {
-    return { type: AND, left: x, right: y, toString: function () { return "(" + this.left.toString() + "&&" + this.right.toString() + ")"; } };
+    return { type: AND, left: x, right: y, 
+	toString: function () { return "(" + this.left.toString() + "&&" + this.right.toString() + ")"; }, 
+	toStringZ3: function () { return "(and " + this.left.toStringZ3() + " " + this.right.toStringZ3() + ")"; } };
 }
-
-function or(x,y){
-    return not(and(not(x),not(y)));
-}
-
 function not(x) {
-    return { type: NOT, left: x, toString: function () { return "(!" + this.left.toString() + ")"; } };
+    return { type: NOT, left: x, 
+	toString: function () { return "(!" + this.left.toString() + ")"; }, 
+	toStringZ3: function () { return "(not " + this.left.toStringZ3() + ")"; } };
 }
-
-
 function seq(s1, s2) {
-    return { type: SEQ, fst: s1, snd: s2, toString: function () { return "" + this.fst.toString() + ";\n" + this.snd.toString(); } };
+    return { type: SEQ, fst: s1, snd: s2, 
+	toString: function () { return "" + this.fst.toString() + ";\n" + this.snd.toString(); }, 
+	toStringZ3: function () { return " {[[[ seq " + this.fst.toStringZ3() + "\n" + this.snd.toStringZ3()+" ]]]}"; } };
 }
-
-
 function assume(e) {
-    return { type: ASSUME, exp: e, toString: function () { return "assume " + this.exp.toString(); } };
+    return { type: ASSUME, exp: e, 
+	toString: function () { return "assume " + this.exp.toString(); } }; // , 
+	// toStringZ3: function () { return "(=> " + this.exp.toStringZ3() + ")"; } };
 }
-
 function assert(e) {
-    return { type: ASSERT, exp: e, toString: function () { return "assert " + this.exp.toString(); } };
+    return { type: ASSERT, exp: e, 
+	toString: function () { return "assert " + this.exp.toString(); } }; // , 
+	// toStringZ3: function () { return "(assert (" + this.exp.toStringZ3() + "))"; } };
 }
-
 function assgn(v, val) {
-    return { type: ASSGN, vr: v, val: val, toString: function () { return "" + this.vr + ":=" + this.val.toString(); } };
+    return { type: ASSGN, vr: v, val: val, 
+	toString: function () { return "" + this.vr + ":=" + this.val.toString(); } }; //, 
+	// toStringZ3: function () { return "(= " + this.vr + " " + this.val.toStringZ3() + ")" } };
 }
-
 function ifte(c, t, f) {
-    return { type: IFTE, cond: c, tcase: t, fcase: f, toString: function () { return "if(" + this.cond.toString() + "){\n" + this.tcase.toString() + '\n}else{\n' + this.fcase.toString() + '\n}'; } };
+    return { type: IFTE, cond: c, tcase: t, fcase: f, 
+	toString: function () { return "if(" + this.cond.toString() + "){\n" + this.tcase.toString() + '\n}else{\n' + this.fcase.toString() + '\n}'; } }; // , 
+	// toStringZ3: function () { return "(ite (" + this.cond.toStringZ3() + ") " + this.tcase.toStringZ3() + " " + this.fcase.toStringZ3() + ")"; } };
 }
-
-function whle(c, b) {
-    return { type: WHLE, cond: c, body: b, toString: function () { return "while(" + this.cond.toString() + "){\n" + this.body.toString() + '\n}'; } };
+function whle(c, i, b) {
+    return { type: WHLE, cond: c, inv: i, body: b, 
+	toString: function () { return "while(" + this.cond.toString() + "){\n" + this.body.toString() + '\n}'; } };
 }
-
 function skip() {
     return { type: SKIP, toString: function () { return "/*skip*/"; } };
 }
 
 //some useful helpers:
-
+function or(x,y){
+    return not(and(not(x),not(y)));
+}
 function eq(x, y) {
     return and(not(lt(x, y)), not(lt(y, x)));
 }
-
+function gt(x, y){
+	return lt(y, x);
+}
+function gteq(x, y){
+	return not(lt(x, y));
+}
 function tru() {
     return not(flse());
 }
-
 function block(slist) {
     if (slist.length == 0) {
         return skip();
@@ -253,13 +321,9 @@ function block(slist) {
 }
 
 //The stuff you have to implement.
-
 function computeVC(prog) {
     //Compute the verification condition for the program leaving some kind of place holder for loop invariants.
 }
-
-
-
 
 function interp() {
     var prog = eval(document.getElementById("p2input").value);
@@ -267,20 +331,26 @@ function interp() {
     clearConsole();
     writeToConsole("Just pretty printing for now");
     writeToConsole(prog.toString());
+	writeToConsole("Final state: " + JSON.stringify(interpretStmt(prog, state)));
 }
-
 
 function genVC() {
     var prog = eval(document.getElementById("p2input").value);
     clearConsole();
-    writeToConsole("Just pretty printing for now");
+	
+    /*
+	writeToConsole("Just pretty printing for now");
     writeToConsole(prog.toString());
-    var mywpc = wpc(prog, tru());
-    writeToConsole(mywpc.toString());
+    // writeToConsole(mywpc.toString());
+	writeToConsole("Z3:");
+	*/
+	
+	var mywpc = vc(prog, tru());
+	writeToConsole("(set-option :interactive-mode true)");
+	writeToConsole("(assert (not " + mywpc.toStringZ3() + "))");
+	writeToConsole("(check-sat)");
+	writeToConsole("(exit)");
 }
-
-
-
 
 function writeToConsole(text) {
     var csl = document.getElementById("console");
