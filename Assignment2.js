@@ -2,7 +2,8 @@
 /// <reference path="default.html" />
 // JavaScript source code
 
-
+// Alumno: Eduardo David Martínez Neri
+// ITAM
 
 ////////////////
 // Problem 2
@@ -67,13 +68,6 @@ function substitute(e, varName, newExp) {
         var eP = substitute(e.left, varName, newExp);
         return not(eP);
     }
-	
-	//nuevas 
-	if(e.type == SEQ){
-    	var S = substitute(e.snd, varName, newExp);
-        var F = substitute(e.fst, varName, newExp);
-		return seq(F,S);
-    }
 }
 
 function vc(cmd, predQ) {
@@ -111,12 +105,13 @@ function vc(cmd, predQ) {
     {
     	return or(not(cmd.exp), predQ);
     	//not( expr ) or predQ
-		
     }
 	
 	if(cmd.type == WHLE) {
 		
-		var Prima = vc(cmd.body, cmd.inv);
+		var invariante = cmd.inv;
+		
+		var Prima = vc(cmd.body, invariante);
 		
 		var parte1 = or(not(cmd.cond), Prima);
 
@@ -124,19 +119,19 @@ function vc(cmd, predQ) {
 		
 		var gen = and(parte1, parte2);
 		
-		var forall = or(not(cmd.inv), gen);
+		var forall = or(not(invariante), gen);
+
+        // substitute Vx,t
+        // iterar state para sustituir las variables para cambio de scope
+        var prog = eval(document.getElementById("p2input").value);
+        var state = JSON.parse(document.getElementById("State").value);   
+        state = interpretStmt(prog, state);
+        
+        for (var property in state) {
+            forall = substitute(forall, property, vr('_' + property));
+        }
 		
-		// substitute Vx,t
-		// iterar state
-		var prog = eval(document.getElementById("p2input").value);
-		var state = JSON.parse(document.getElementById("State").value);   
-		state = interpretStmt(prog, state);
-		
-		for (var property in state) {
-			forall = substitute(forall, property, vr('_' + property));
-		}
-		
-		return and(cmd.inv, forall);
+		return and(invariante, forall);
 	}
 }
 
@@ -147,7 +142,6 @@ function interpretExpr(e, state) {
     if (e.type == FALSE) { 
 	return false; 
 	}
-	//####################################
     if (e.type == VR) { 
 	return state[e.name]; 
 	}
@@ -323,6 +317,24 @@ function block(slist) {
 //The stuff you have to implement.
 function computeVC(prog) {
     //Compute the verification condition for the program leaving some kind of place holder for loop invariants.
+    var mywpc = vc(prog, tru());
+
+    var respuesta = "(set-option :interactive-mode true)";
+    
+    var prog = eval(document.getElementById("p2input").value);
+    var state = JSON.parse(document.getElementById("State").value);   
+    state = interpretStmt(prog, state);
+    
+    for (var property in state) {
+        // substitute(forall, property, vr('_' + property));
+        respuesta += "\n(declare-fun " + property + " () Int)";
+        respuesta += "\n(declare-fun _" + property + " () Int)";
+    }
+    
+    respuesta += "\n(assert (not " + mywpc.toStringZ3() + "))";
+    respuesta += "\n(check-sat)";
+    respuesta += "\n(exit)";
+    return respuesta;
 }
 
 function interp() {
@@ -347,6 +359,17 @@ function genVC() {
 	
 	var mywpc = vc(prog, tru());
 	writeToConsole("(set-option :interactive-mode true)");
+	
+	var prog = eval(document.getElementById("p2input").value);
+	var state = JSON.parse(document.getElementById("State").value);   
+	state = interpretStmt(prog, state);
+	
+	for (var property in state) {
+		// substitute(forall, property, vr('_' + property));
+		writeToConsole("(declare-fun " + property + " () Int)");
+		writeToConsole("(declare-fun _" + property + " () Int)");
+	}
+	
 	writeToConsole("(assert (not " + mywpc.toStringZ3() + "))");
 	writeToConsole("(check-sat)");
 	writeToConsole("(exit)");

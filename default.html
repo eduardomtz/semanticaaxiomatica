@@ -54,13 +54,12 @@ block([
 block([
   assume(tru()), 
   assgn('t', num(0)), 
-  assgn('N', num(10)), 
   assgn('x', num(10)), 
   whle(gt(vr('x'), num(0)), 
-  block([ eq(num(10), plus(vr('x'),vr('y'))), gteq(vr('x'), num(0)) ]), 
+  block([ and(eq(num(10), plus(vr('x'),vr('t'))), gteq(vr('x'), num(0))) ]), 
   block([ 
-    assgn(vr('x'), plus(vr('x'),num(-1))), 
-    assgn(vr('t'), plus(vr('t'),num(1)))
+    assgn('x', plus(vr('x'),num(-1))), 
+    assgn('t', plus(vr('t'),num(1)))
   ])), 
   assert(eq(vr('t'), num(10)))
 ]);
